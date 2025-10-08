@@ -19,7 +19,6 @@ from models.TweetUrl import TweetUrl
 from models.TweetUserMention import TweetUserMention
 from models.User import User
 
-# Configurations
 FILE_LIST = [f for f in os.listdir('importy') if os.path.isfile(os.path.join('importy', f))]
 BATCH_SIZE = 10 ** 7
 
@@ -38,7 +37,8 @@ OBJECTS: List[Any] = [
 
 
 def parse_json(tweet_json: Dict[str, Any], last_hashtag_id: int) -> Tuple[
-    Tweet, User, Place, List[TweetMedia], List[TweetUrl], List[TweetUserMention], List[TweetHashtag], List[Hashtag]]:
+    List[Tweet], List[User], List[Place], List[TweetMedia], List[TweetUrl], List[TweetUserMention], List[TweetHashtag],
+    List[Hashtag]]:
     tweet = Tweet(tweet_json)
     user = User(tweet_json) if tweet_json.get('user', None) else None
     place = Place(tweet_json) if tweet_json.get('place', None) else None
@@ -53,7 +53,27 @@ def parse_json(tweet_json: Dict[str, Any], last_hashtag_id: int) -> Tuple[
         hashtag_id = last_hashtag_id + i + 1
         hashtags.append(Hashtag(hashtag_json, hashtag_id))
         tweet_hashtags.append(TweetHashtag(tweet.id, hashtag_id))
-    return tweet, user, place, medias, urls, user_mentions, tweet_hashtags, hashtags
+    retweeted_tweet = tweet_json.get('retweeted_status', None)
+    quoted_tweet = tweet_json.get('quoted_status', None)
+    tweets = [tweet]
+    users = [user] if user else []
+    places = [place] if place else []
+    for inner_tweet_json in [retweeted_tweet, quoted_tweet]:
+        if not inner_tweet_json:
+            continue
+        inner_tweets, inner_users, inner_places, inner_medias, inner_urls, inner_user_mentions, inner_tweet_hashtags, inner_hashtags = parse_json(
+            inner_tweet_json, last_hashtag_id + len(hashtags))
+        tweets += inner_tweets
+        users += inner_users
+        places += inner_places
+        medias += inner_medias
+        urls += inner_urls
+        user_mentions += inner_user_mentions
+        tweet_hashtags += inner_tweet_hashtags
+        hashtags += inner_hashtags
+        last_hashtag_id += len(inner_hashtags)
+
+    return tweets, users, places, medias, urls, user_mentions, tweet_hashtags, hashtags
 
 
 def dicts_to_csv_stringio(fieldnames, rows):
@@ -112,27 +132,30 @@ def make_hashtags_unique(rows: Dict[Any, List[Dict[str, Any]]],
     for i, hashtag in enumerate(hashtags):
         tag_text = hashtag['tag']
         if tag_text not in reverse_index_hashtags:
-            reverse_index_hashtags[tag_text] = hashtag['id']
+            reverse_index_hashtags[tag_text] = i
             continue
 
         duplicate_hashtags_index.append(i)
         tweet_hashtag_indices = reverse_index_tweet_hashtags.pop(hashtag['id'])
-        new_id = reverse_index_hashtags[tag_text]
+        new_id_index = reverse_index_hashtags[tag_text]
+        new_id = hashtags[new_id_index]['id']
         for j in tweet_hashtag_indices:
             tweet_hashtags[j]['hashtag_id'] = new_id
         reverse_index_tweet_hashtags[new_id] = reverse_index_tweet_hashtags.get(new_id, []) + tweet_hashtag_indices
 
-    for i in range(len(duplicate_hashtags_index) - 1, -1, -1):
-        hashtags.pop(duplicate_hashtags_index[i])
-
     duplicate_hashtags = getDbHashtags(hashtags, conn)
-    for hashtag in duplicate_hashtags:
+    for i in range(len(duplicate_hashtags) - 1, -1, -1):
+        hashtag = duplicate_hashtags[i]
         tag_text = hashtag['tag']
-        hashtag_id_to_delete = reverse_index_hashtags[tag_text]
+        hashtag_index_to_delete = reverse_index_hashtags[tag_text]
+        hashtag_id_to_delete = hashtags[hashtag_index_to_delete]['id']
         tweet_hashtag_indices = reverse_index_tweet_hashtags.pop(hashtag_id_to_delete)
-        for i in tweet_hashtag_indices:
-            tweet_hashtags[i]['hashtag_id'] = hashtag['id']
-        reverse_index_hashtags[tag_text] = hashtag['id']
+        for j in tweet_hashtag_indices:
+            tweet_hashtags[j]['hashtag_id'] = hashtag['id']
+        reverse_index_hashtags.pop(tag_text)
+        duplicate_hashtags_index.append(hashtag_index_to_delete)
+    for i in sorted(duplicate_hashtags_index, reverse=True):
+        hashtags.pop(i)
     return tweet_hashtags, hashtags
 
 
@@ -163,14 +186,12 @@ def process_file(conn, file_path, last_used_hashtag_id) -> tuple[int, timedelta,
     with gzip.open(file_path, 'rt', encoding='utf-8') as f:
         for line in f:
             tweet_json = json.loads(line)
-            tweet, user, place, medias, urls, user_mentions, tweet_hashtags, hashtags = parse_json(tweet_json,
+            tweets, users, places, medias, urls, user_mentions, tweet_hashtags, hashtags = parse_json(tweet_json,
                                                                                                    last_used_hashtag_id)
             last_used_hashtag_id += len(hashtags)
-            rows[Tweet].append(tweet.get_dict_representation())
-            if user:
-                rows[User].append(user.get_dict_representation())
-            if place:
-                rows[Place].append(place.get_dict_representation())
+            rows[Tweet] += list(map(lambda m: m.get_dict_representation(), tweets))
+            rows[User] += list(map(lambda m: m.get_dict_representation(), users))
+            rows[Place] += list(map(lambda m: m.get_dict_representation(), places))
             rows[TweetMedia] += list(map(lambda m: m.get_dict_representation(), medias))
             rows[TweetUrl] += list(map(lambda m: m.get_dict_representation(), urls))
             rows[TweetUserMention] += list(map(lambda m: m.get_dict_representation(), user_mentions))
