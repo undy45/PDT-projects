@@ -1,0 +1,245 @@
+Processing files:   2%|▎         | 1/40 [00:58<37:52, 58.27s/it]
+File: importy/coronavirus-tweet-id-2020-08-01-02.jsonl.gz
+    Preprocessing time: 0:00:25.592237
+    Make Hash tags unique: 0:00:01.915992
+    COPY and Insert to db: 0:00:32.674859
+
+
+File: importy/coronavirus-tweet-id-2020-08-01-05.jsonl.gz
+    Preprocessing time: 0:00:23.067427
+    Make Hash tags unique: 0:00:01.859967
+    COPY and Insert to db: 0:00:28.233150
+
+Processing files:   8%|▊         | 3/40 [02:36<31:23, 50.91s/it]
+File: importy/coronavirus-tweet-id-2020-08-01-06.jsonl.gz
+    Preprocessing time: 0:00:20.673275
+    Make Hash tags unique: 0:00:01.697000
+    COPY and Insert to db: 0:00:26.359848
+
+
+File: importy/coronavirus-tweet-id-2020-08-01-09.jsonl.gz
+    Preprocessing time: 0:00:20.209422
+    Make Hash tags unique: 0:00:01.656421
+    COPY and Insert to db: 0:00:27.412808
+
+Processing files:  12%|█▎        | 5/40 [04:20<30:14, 51.84s/it]
+File: importy/coronavirus-tweet-id-2020-08-01-13.jsonl.gz
+    Preprocessing time: 0:00:24.275875
+    Make Hash tags unique: 0:00:02.167975
+    COPY and Insert to db: 0:00:31.526065
+
+Processing files:  15%|█▌        | 6/40 [05:20<31:00, 54.72s/it]
+File: importy/coronavirus-tweet-id-2020-08-01-16.jsonl.gz
+    Preprocessing time: 0:00:23.752264
+    Make Hash tags unique: 0:00:01.653000
+    COPY and Insert to db: 0:00:36.546661
+
+
+File: importy/coronavirus-tweet-id-2020-08-01-18.jsonl.gz
+    Preprocessing time: 0:00:27.597175
+    Make Hash tags unique: 0:00:01.799971
+    COPY and Insert to db: 0:00:37.673909
+
+Processing files:  20%|██        | 8/40 [07:24<31:04, 58.26s/it]
+File: importy/coronavirus-tweet-id-2020-08-01-21.jsonl.gz
+    Preprocessing time: 0:00:25.750730
+    Make Hash tags unique: 0:00:01.907998
+    COPY and Insert to db: 0:00:32.713349
+
+
+File: importy/coronavirus-tweet-id-2020-08-02-01.jsonl.gz
+    Preprocessing time: 0:00:25.775757
+    Make Hash tags unique: 0:00:01.630002
+    COPY and Insert to db: 0:00:35.825051
+
+Processing files:  25%|██▌       | 10/40 [09:26<29:53, 59.80s/it]
+File: importy/coronavirus-tweet-id-2020-08-02-12.jsonl.gz
+    Preprocessing time: 0:00:25.321346
+    Make Hash tags unique: 0:00:01.459001
+    COPY and Insert to db: 0:00:35.567977
+
+Processing files:  28%|██▊       | 11/40 [10:29<29:23, 60.82s/it]
+File: importy/coronavirus-tweet-id-2020-08-02-22.jsonl.gz
+    Preprocessing time: 0:00:27.696359
+    Make Hash tags unique: 0:00:01.221002
+    COPY and Insert to db: 0:00:35.454889
+
+
+File: importy/coronavirus-tweet-id-2020-08-03-04.jsonl.gz
+    Preprocessing time: 0:00:26.281859
+    Make Hash tags unique: 0:00:01.442030
+    COPY and Insert to db: 0:00:37.968650
+
+Processing files:  32%|███▎      | 13/40 [12:36<27:56, 62.11s/it]
+File: importy/coronavirus-tweet-id-2020-08-03-10.jsonl.gz
+    Preprocessing time: 0:00:24.870493
+    Make Hash tags unique: 0:00:02.192029
+    COPY and Insert to db: 0:00:37.788267
+
+
+File: importy/coronavirus-tweet-id-2020-08-03-13.jsonl.gz
+    Preprocessing time: 0:00:37.755562
+    Make Hash tags unique: 0:00:01.705000
+    COPY and Insert to db: 0:00:45.142814
+
+Processing files:  38%|███▊      | 15/40 [15:08<28:31, 68.48s/it]
+File: importy/coronavirus-tweet-id-2020-08-04-07.jsonl.gz
+    Preprocessing time: 0:00:31.680447
+    Make Hash tags unique: 0:00:01.664998
+    COPY and Insert to db: 0:00:37.012193
+
+Processing files:  40%|████      | 16/40 [16:39<30:10, 75.43s/it]
+File: importy/coronavirus-tweet-id-2020-08-04-09.jsonl.gz
+    Preprocessing time: 0:00:33.972383
+    Make Hash tags unique: 0:00:04.157136
+    COPY and Insert to db: 0:00:57.589333
+
+
+File: importy/coronavirus-tweet-id-2020-08-04-13.jsonl.gz
+    Preprocessing time: 0:00:29.262861
+    Make Hash tags unique: 0:00:02.052031
+    COPY and Insert to db: 0:00:41.945041
+
+Processing files:  45%|████▌     | 18/40 [19:22<29:07, 79.44s/it]
+File: importy/coronavirus-tweet-id-2020-08-04-18.jsonl.gz
+    Preprocessing time: 0:00:41.947456
+    Make Hash tags unique: 0:00:01.666031
+    COPY and Insert to db: 0:00:49.797171
+
+
+File: importy/coronavirus-tweet-id-2020-08-04-19.jsonl.gz
+    Preprocessing time: 0:00:32.752151
+    Make Hash tags unique: 0:00:01.781588
+    COPY and Insert to db: 0:00:51.790119
+
+Processing files:  50%|█████     | 20/40 [22:24<28:38, 85.94s/it]
+File: importy/coronavirus-tweet-id-2020-08-04-20.jsonl.gz
+    Preprocessing time: 0:00:52.139695
+    Make Hash tags unique: 0:00:01.917639
+    COPY and Insert to db: 0:00:45.383482
+
+
+File: importy/coronavirus-tweet-id-2020-08-04-23.jsonl.gz
+    Preprocessing time: 0:00:42.946786
+    Make Hash tags unique: 0:00:01.324007
+    COPY and Insert to db: 0:00:55.886263
+
+Processing files:  55%|█████▌    | 22/40 [25:53<28:45, 95.86s/it]
+File: importy/coronavirus-tweet-id-2020-08-05-01.jsonl.gz
+    Preprocessing time: 0:00:44.668170
+    Make Hash tags unique: 0:00:02.758205
+    COPY and Insert to db: 0:01:05.287314
+
+
+File: importy/coronavirus-tweet-id-2020-08-05-05.jsonl.gz
+    Preprocessing time: 0:00:49.239770
+    Make Hash tags unique: 0:00:01.810992
+    COPY and Insert to db: 0:01:04.675034
+
+Processing files:  60%|██████    | 24/40 [30:50<33:34, 125.92s/it]
+File: importy/coronavirus-tweet-id-2020-08-05-07.jsonl.gz
+    Preprocessing time: 0:00:47.086963
+    Make Hash tags unique: 0:00:02.298094
+    COPY and Insert to db: 0:02:16.332016
+
+
+File: importy/coronavirus-tweet-id-2020-08-05-09.jsonl.gz
+    Preprocessing time: 0:00:48.836179
+    Make Hash tags unique: 0:00:03.348000
+    COPY and Insert to db: 0:02:06.942023
+
+Processing files:  65%|██████▌   | 26/40 [37:35<38:59, 167.11s/it]
+File: importy/coronavirus-tweet-id-2020-08-05-15.jsonl.gz
+    Preprocessing time: 0:00:45.093470
+    Make Hash tags unique: 0:00:03.390028
+    COPY and Insert to db: 0:03:03.219200
+
+
+File: importy/coronavirus-tweet-id-2020-08-05-17.jsonl.gz
+    Preprocessing time: 0:00:30.866954
+    Make Hash tags unique: 0:00:02.331708
+    COPY and Insert to db: 0:02:44.074378
+
+Processing files:  70%|███████   | 28/40 [44:51<39:04, 195.36s/it]
+File: importy/coronavirus-tweet-id-2020-08-06-02.jsonl.gz
+    Preprocessing time: 0:00:38.644100
+    Make Hash tags unique: 0:00:01.936207
+    COPY and Insert to db: 0:03:23.120644
+
+Processing files:  72%|███████▎  | 29/40 [49:58<41:56, 228.75s/it]
+File: importy/coronavirus-tweet-id-2020-08-06-07.jsonl.gz
+    Preprocessing time: 0:00:32.276056
+    Make Hash tags unique: 0:00:02.283370
+    COPY and Insert to db: 0:04:34.376179
+
+
+File: importy/coronavirus-tweet-id-2020-08-06-20.jsonl.gz
+    Preprocessing time: 0:00:36.440163
+    Make Hash tags unique: 0:00:02.080280
+    COPY and Insert to db: 0:05:19.040335
+
+Processing files:  78%|███████▊  | 31/40 [1:00:48<41:15, 275.05s/it]
+File: importy/coronavirus-tweet-id-2020-08-07-12.jsonl.gz
+    Preprocessing time: 0:00:30.756147
+    Make Hash tags unique: 0:00:02.442969
+    COPY and Insert to db: 0:04:23.605396
+
+Processing files:  80%|████████  | 32/40 [1:04:53<35:29, 266.18s/it]
+File: importy/coronavirus-tweet-id-2020-08-07-22.jsonl.gz
+    Preprocessing time: 0:00:23.759532
+    Make Hash tags unique: 0:00:01.362299
+    COPY and Insert to db: 0:03:41.725473
+
+
+File: importy/coronavirus-tweet-id-2020-08-08-03.jsonl.gz
+    Preprocessing time: 0:00:37.651486
+    Make Hash tags unique: 0:00:02.387266
+    COPY and Insert to db: 0:04:58.990555
+
+Processing files:  85%|████████▌ | 34/40 [1:14:55<28:03, 280.64s/it]
+File: importy/coronavirus-tweet-id-2020-08-08-13.jsonl.gz
+    Preprocessing time: 0:00:25.739601
+    Make Hash tags unique: 0:00:01.816371
+    COPY and Insert to db: 0:03:59.314914
+
+Processing files:  88%|████████▊ | 35/40 [1:19:54<23:51, 286.31s/it]
+File: importy/coronavirus-tweet-id-2020-08-08-20.jsonl.gz
+    Preprocessing time: 0:00:27.405673
+    Make Hash tags unique: 0:00:01.322834
+    COPY and Insert to db: 0:04:32.149321
+
+
+File: importy/coronavirus-tweet-id-2020-08-09-03.jsonl.gz
+    Preprocessing time: 0:00:26.233475
+    Make Hash tags unique: 0:00:01.402657
+    COPY and Insert to db: 0:03:08.224225
+
+Processing files:  92%|█████████▎| 37/40 [1:27:47<13:07, 262.64s/it]
+File: importy/coronavirus-tweet-id-2020-08-09-19.jsonl.gz
+    Preprocessing time: 0:00:37.801089
+    Make Hash tags unique: 0:00:01.896998
+    COPY and Insert to db: 0:03:39.896817
+
+
+File: importy/coronavirus-tweet-id-2020-08-09-20.jsonl.gz
+    Preprocessing time: 0:00:35.932957
+    Make Hash tags unique: 0:00:01.540031
+    COPY and Insert to db: 0:05:33.222164
+
+Processing files:  98%|█████████▊| 39/40 [1:37:50<04:36, 276.47s/it]
+File: importy/coronavirus-tweet-id-2020-08-09-22.jsonl.gz
+    Preprocessing time: 0:00:33.727908
+    Make Hash tags unique: 0:00:03.546385
+    COPY and Insert to db: 0:03:20.459532
+
+
+File: importy/coronavirus-tweet-id-2020-08-10-05.jsonl.gz
+    Preprocessing time: 0:00:29.982344
+    Make Hash tags unique: 0:00:01.528041
+    COPY and Insert to db: 0:04:38.830749
+
+Overall
+    Preprocessing time: 0:21:45.463597
+    Make Hash tags unique: 0:01:20.353553
+    COPY and Insert to db: 1:21:13.778168
+Processing files: 100%|██████████| 40/40 [1:42:59<00:00, 154.48s/it]
