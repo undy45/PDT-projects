@@ -1,21 +1,23 @@
 from typing import Any, Dict, List
 
+import Util
+
 
 class User(object):
     def __init__(self, tweet_json: Dict[str, Any]):
         user_json = tweet_json.get('user', {})
         self.id = user_json.get('id', None)
-        self.screen_name = user_json.get('screen_name', None)
-        self.name = user_json.get('name', None)
-        self.description = user_json.get('description', None)
+        self.screen_name = Util.format_field(user_json, 'screen_name')
+        self.name = Util.format_field(user_json, 'name')
+        self.description = Util.format_field(user_json, 'description')
         self.verified = user_json.get('verified', False)
         self.protected = user_json.get('protected', False)
         self.followers_count = user_json.get('followers_count', None)
         self.friends_count = user_json.get('friends_count', None)
         self.statuses_count = user_json.get('statuses_count', None)
         self.created_at = user_json.get('created_at', None)
-        self.location = user_json.get('location', None)
-        self.url = user_json.get('url', None)
+        self.location = Util.format_field(user_json, 'location')
+        self.url = Util.format_field(user_json, 'url')
 
     def get_dict_representation(self) -> Dict[str, Any]:
         return {

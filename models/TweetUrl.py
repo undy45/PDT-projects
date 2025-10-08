@@ -1,13 +1,16 @@
 from typing import Any, Dict, List
 
+import Util
+
 
 class TweetUrl(object):
     def __init__(self, tweet_url_json: Dict[str, Any], tweet_id: int):
         self.tweet_id = tweet_id
-        self.url = tweet_url_json.get('url', None)
-        self.expanded_url = tweet_url_json.get('expanded_url', None)
-        self.display_url = tweet_url_json.get('display_url', None)
-        self.unwound_url = tweet_url_json.get('unwound_url', None)
+        
+        self.url = Util.format_field(tweet_url_json, 'url')
+        self.expanded_url = Util.format_field(tweet_url_json, 'expanded_url')
+        self.display_url = Util.format_field(tweet_url_json, 'display_url')
+        self.unwound_url = Util.format_field(tweet_url_json, 'unwound_url')
 
     def get_dict_representation(self) -> Dict[str, Any]:
         return {

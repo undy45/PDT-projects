@@ -3,6 +3,8 @@ import json
 import io
 import csv
 import os
+import datetime
+from datetime import timedelta
 from typing import Dict, Any, Tuple, List
 
 import psycopg2
@@ -19,7 +21,7 @@ from models.User import User
 
 # Configurations
 FILE_LIST = [f for f in os.listdir('importy') if os.path.isfile(os.path.join('importy', f))]
-BATCH_SIZE = 10**7
+BATCH_SIZE = 10 ** 7
 
 PG_CONN_INFO = "dbname=twitter user=postgres password=FMAis#1anime host=localhost"
 
@@ -65,24 +67,25 @@ def dicts_to_csv_stringio(fieldnames, rows):
 
 def copy_to_temp_and_insert(conn, row_object, csv_buffer):
     with conn.cursor() as cur:
+        if not row_object.get_conflict_columns():
+            cur.copy_expert(
+                f"COPY {row_object.get_table_name()} ({', '.join(row_object.get_field_names())}) FROM STDIN CSV HEADER",
+                csv_buffer)
+            conn.commit()
+            return
         temp_table_name = 'tmp_' + row_object.get_table_name()
         cur.execute(
             f"CREATE TEMP TABLE IF NOT EXISTS {temp_table_name} (LIKE {row_object.get_table_name()} INCLUDING DEFAULTS) ON COMMIT DROP;")
 
-        cur.copy_expert(f"COPY {temp_table_name} ({', '.join(row_object.get_field_names())}) FROM STDIN CSV HEADER", csv_buffer)
+        cur.copy_expert(f"COPY {temp_table_name} ({', '.join(row_object.get_field_names())}) FROM STDIN CSV HEADER",
+                        csv_buffer)
 
         pk_cols = ', '.join(row_object.get_conflict_columns())
-        if row_object.get_conflict_columns():
-            cur.execute(f"""
-                        INSERT INTO {row_object.get_table_name()} ({', '.join(row_object.get_field_names())})
-                        SELECT {', '.join(row_object.get_field_names())} FROM {temp_table_name}
-                        ON CONFLICT ({pk_cols}) DO NOTHING;
-                    """)
-        else:
-            cur.execute(f"""
-                        INSERT INTO {row_object.get_table_name()} ({', '.join(row_object.get_field_names())})
-                        SELECT {', '.join(row_object.get_field_names())} FROM {temp_table_name};
-                    """)
+        cur.execute(f"""
+                    INSERT INTO {row_object.get_table_name()} ({', '.join(row_object.get_field_names())})
+                    SELECT {', '.join(row_object.get_field_names())} FROM {temp_table_name}
+                    ON CONFLICT ({pk_cols}) DO NOTHING;
+                """)
     conn.commit()
 
 
@@ -95,7 +98,6 @@ def getDbHashtags(hashtags: List[Dict[str, Any]], conn) -> List[Dict[str, Any]]:
         return [{'id': id, 'tag': tag} for id, tag in existing]
 
 
-
 def make_hashtags_unique(rows: Dict[Any, List[Dict[str, Any]]],
                          conn) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     hashtags = rows[Hashtag]
@@ -103,11 +105,11 @@ def make_hashtags_unique(rows: Dict[Any, List[Dict[str, Any]]],
     reverse_index_hashtags: Dict[str, int] = {}
     duplicate_hashtags_index: List[int] = []
     reverse_index_tweet_hashtags: Dict[int, List[int]] = {}
-    for i, tweet_hashtag in tqdm(enumerate(tweet_hashtags), desc=f"Creating reverse_index_tweet_hashtags", position=1):
+    for i, tweet_hashtag in enumerate(tweet_hashtags):
         key = tweet_hashtag['hashtag_id']
         reverse_index_tweet_hashtags[key] = reverse_index_tweet_hashtags.get(key, []) + [i]
 
-    for i, hashtag in tqdm(enumerate(hashtags), desc=f"Removing duplicates locally", total=len(hashtags), position=1):
+    for i, hashtag in enumerate(hashtags):
         tag_text = hashtag['tag']
         if tag_text not in reverse_index_hashtags:
             reverse_index_hashtags[tag_text] = hashtag['id']
@@ -124,7 +126,7 @@ def make_hashtags_unique(rows: Dict[Any, List[Dict[str, Any]]],
         hashtags.pop(duplicate_hashtags_index[i])
 
     duplicate_hashtags = getDbHashtags(hashtags, conn)
-    for hashtag in tqdm(duplicate_hashtags, desc=f"Removing duplicates with DB", total=len(duplicate_hashtags), position=1):
+    for hashtag in duplicate_hashtags:
         tag_text = hashtag['tag']
         hashtag_id_to_delete = reverse_index_hashtags[tag_text]
         tweet_hashtag_indices = reverse_index_tweet_hashtags.pop(hashtag_id_to_delete)
@@ -134,12 +136,17 @@ def make_hashtags_unique(rows: Dict[Any, List[Dict[str, Any]]],
     return tweet_hashtags, hashtags
 
 
-def count_lines_gz(file_path):
-    with gzip.open(file_path, 'rt', encoding='utf-8') as f:
-        return sum(1 for _ in f)
+def print_individual_file(preprocess_time: datetime.timedelta, make_unique_time: datetime.timedelta,
+                          db_time: datetime.timedelta, filename: str):
+    print()
+    print(f"File: {filename}")
+    print(f"    Preprocessing time: {preprocess_time}")
+    print(f"    Make Hash tags unique: {make_unique_time}")
+    print(f"    COPY and Insert to db: {db_time}")
+    print()
 
 
-def process_file(conn, file_path):
+def process_file(conn, file_path, last_used_hashtag_id) -> tuple[int, timedelta, timedelta, timedelta]:
     rows = {
         Tweet: [],
         Hashtag: [],
@@ -150,16 +157,14 @@ def process_file(conn, file_path):
         TweetUserMention: [],
         User: [],
     }
-    total_tweets = 0
-    total_users = 0
-    last_used_hashtag_id = 0
-
-    total_lines = count_lines_gz(file_path)
-
+    start = datetime.datetime.now()
+    make_unique_time = datetime.timedelta()
+    db_time = datetime.timedelta()
     with gzip.open(file_path, 'rt', encoding='utf-8') as f:
-        for line in tqdm(f, desc=f"Processing {file_path}", total=total_lines, position=1):
+        for line in f:
             tweet_json = json.loads(line)
-            tweet, user, place, medias, urls, user_mentions, tweet_hashtags, hashtags = parse_json(tweet_json, last_used_hashtag_id)
+            tweet, user, place, medias, urls, user_mentions, tweet_hashtags, hashtags = parse_json(tweet_json,
+                                                                                                   last_used_hashtag_id)
             last_used_hashtag_id += len(hashtags)
             rows[Tweet].append(tweet.get_dict_representation())
             if user:
@@ -172,33 +177,52 @@ def process_file(conn, file_path):
             rows[TweetHashtag] += list(map(lambda m: m.get_dict_representation(), tweet_hashtags))
             rows[Hashtag] += list(map(lambda m: m.get_dict_representation(), hashtags))
 
-            # Flush batch if size reached
-            if len(rows[Tweet]) < BATCH_SIZE:
-                continue
-            rows[TweetHashtag], rows[Hashtag] = make_hashtags_unique(rows, conn)
-            for row_object in OBJECTS:
-                if not rows[row_object]:
-                    continue
-                tmp_csv = dicts_to_csv_stringio(row_object.get_field_names(), rows[row_object])
-                copy_to_temp_and_insert(conn, row_object, tmp_csv)
-                rows[row_object].clear()
+            if len(rows[Tweet]) >= BATCH_SIZE:
+                make_unique_time_tmp, db_time_tmp = flush_to_db(rows, conn)
+                make_unique_time += make_unique_time_tmp
+                db_time += db_time_tmp
+    make_unique_time_tmp, db_time_tmp = flush_to_db(rows, conn)
+    make_unique_time += make_unique_time_tmp
+    db_time += db_time_tmp
+    end = datetime.datetime.now()
+    preprocess_time = end - start - db_time
+    print_individual_file(preprocess_time, make_unique_time, db_time, file_path)
+    return last_used_hashtag_id, preprocess_time, make_unique_time, db_time
 
-    # Flush remaining rows after loop
+
+def flush_to_db(rows, conn) -> Tuple[datetime.timedelta, datetime.timedelta]:
+    start = datetime.datetime.now()
     rows[TweetHashtag], rows[Hashtag] = make_hashtags_unique(rows, conn)
+    end_make_unique = datetime.datetime.now()
     for row_object in OBJECTS:
         if not rows[row_object]:
             continue
         tmp_csv = dicts_to_csv_stringio(row_object.get_field_names(), rows[row_object])
         copy_to_temp_and_insert(conn, row_object, tmp_csv)
         rows[row_object].clear()
-    print(f"Finished processing {file_path}: imported {total_tweets} tweets and {total_users} unique users")
+    return end_make_unique - start, datetime.datetime.now() - end_make_unique
 
 
 def main():
     conn = psycopg2.connect(PG_CONN_INFO)
     try:
+        last_used_hashtag_id = 0
+        preprocess_time_all = datetime.timedelta()
+        make_unique_time_all = datetime.timedelta()
+        db_time_all = datetime.timedelta()
         for file_path in tqdm(FILE_LIST, total=len(FILE_LIST), desc="Processing files", position=0):
-            process_file(conn, 'importy/' + file_path)
+            last_used_hashtag_id, preprocess_time, make_unique_time, db_time = process_file(conn,
+                                                                                            'importy/' + file_path,
+                                                                                            last_used_hashtag_id,
+                                                                                            )
+            preprocess_time_all += preprocess_time
+            make_unique_time_all += make_unique_time
+            db_time_all += db_time
+        print(f"Overall")
+        print(f"    Preprocessing time: {preprocess_time_all}")
+        print(f"    Make Hash tags unique: {make_unique_time_all}")
+        print(f"    COPY and Insert to db: {db_time_all}")
+
     finally:
         conn.close()
 

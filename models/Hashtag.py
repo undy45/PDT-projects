@@ -1,10 +1,12 @@
 from typing import Any, Dict, List
 
+import Util
+
 
 class Hashtag(object):
     def __init__(self, hashtag_json: Dict[str, Any], db_id: int):
         self.id = db_id
-        self.tag = hashtag_json.get('text', None)
+        self.tag = Util.format_field(hashtag_json, 'text')
 
     def get_dict_representation(self) -> Dict[str, Any]:
         return {

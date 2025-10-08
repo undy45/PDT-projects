@@ -1,20 +1,22 @@
 from typing import Any, Dict, List
 
+import Util
+
 
 class Tweet(object):
     def __init__(self, tweet_json: Dict[str, Any]):
         self.id = tweet_json.get("id")
         self.created_at = tweet_json.get('created_at', None)
         if tweet_json.get('truncated', False):
-            self.full_text = (tweet_json.get('extended_tweet', {}) or {}).get('full_text', None)
+            self.full_text = Util.format_field(tweet_json, ['extended_tweet', 'full_text'])
         else:
-            self.full_text = tweet_json.get('text', None)
+            self.full_text = Util.format_field(tweet_json, ['full_text'])
         display_text_range = tweet_json.get('display_text_range', [None, None])
         self.display_from = display_text_range[0]
         self.display_to = display_text_range[1]
-        self.lang = tweet_json.get('lang', None)
+        self.lang = Util.format_field(tweet_json, 'lang')
         self.user_id = (tweet_json.get('user', {}) or {}).get('id', None)
-        self.source = tweet_json.get('source', None)
+        self.source = Util.format_field(tweet_json, 'source')
         self.in_reply_to_status_id = tweet_json.get('in_reply_to_status_id', None)
         self.quoted_status_id = tweet_json.get('quoted_status_id', None)
         self.retweeted_status_id = (tweet_json.get('retweeted_status', {}) or {}).get('id', None)

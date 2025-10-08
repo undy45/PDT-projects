@@ -1,15 +1,17 @@
 from typing import Any, Dict, List
 
+import Util
+
 
 class TweetMedia(object):
     def __init__(self, tweet_media_json: Dict[str, Any], tweet_id: int):
         self.tweet_id = tweet_id
         self.media_id = tweet_media_json.get('id')
-        self.type = tweet_media_json.get('type', None)
-        self.media_url = tweet_media_json.get('media_url', None)
-        self.media_url_https = tweet_media_json.get('media_url_https', None)
-        self.display_url = tweet_media_json.get('display_url', None)
-        self.expanded_url = tweet_media_json.get('expanded_url', None)
+        self.type = Util.format_field(tweet_media_json, 'type')
+        self.media_url = Util.format_field(tweet_media_json, 'media_url')
+        self.media_url_https = Util.format_field(tweet_media_json, 'media_url_https')
+        self.display_url = Util.format_field(tweet_media_json, 'display_url')
+        self.expanded_url = Util.format_field(tweet_media_json, 'expanded_url')
 
     def get_dict_representation(self) -> Dict[str, Any]:
         return {

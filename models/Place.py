@@ -1,14 +1,16 @@
 from typing import Any, Dict, List
 
+import Util
+
 
 class Place(object):
     def __init__(self, tweet_json: Dict[str, Any]):
         place_json = tweet_json.get('place', {})
-        self.id = place_json.get('id', None)
-        self.full_name = place_json.get('full_name', None)
-        self.country = place_json.get('country', None)
-        self.country_code = place_json.get('country_code', None)
-        self.place_type = place_json.get('place_type', None)
+        self.id = Util.format_field(place_json, 'id')
+        self.full_name = Util.format_field(place_json, 'full_name')
+        self.country = Util.format_field(place_json, 'country')
+        self.country_code = Util.format_field(place_json, 'country_code')
+        self.place_type = Util.format_field(place_json, 'place_type')
 
     def get_dict_representation(self) -> Dict[str, Any]:
         return {
