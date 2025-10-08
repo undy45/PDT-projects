@@ -1,4 +1,4 @@
 /importy/
-/.idea/
+/.idea/*
 /.venv/
-
+.idea/*
