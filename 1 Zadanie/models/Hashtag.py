@@ -27,6 +27,4 @@ class Hashtag(object):
 
     @staticmethod
     def get_conflict_columns() -> List[str]:
-        return [
-            'tag',
-        ]
+        return []

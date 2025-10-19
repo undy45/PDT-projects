@@ -100,11 +100,16 @@ def copy_to_temp_and_insert(conn, row_object, csv_buffer):
         cur.copy_expert(f"COPY {temp_table_name} ({', '.join(row_object.get_field_names())}) FROM STDIN CSV HEADER",
                         csv_buffer)
 
-        pk_cols = ', '.join(row_object.get_conflict_columns())
+        pk_cols = row_object.get_conflict_columns()
+        join_condition = ' AND '.join(f"t.{col} = tmp.{col}" for col in pk_cols)
+        select_cols = ', '.join(f"tmp.{col}" for col in row_object.get_field_names())
+        distinct_on_cols = ', '.join(f"tmp.{col}" for col in pk_cols)
         cur.execute(f"""
                     INSERT INTO {row_object.get_table_name()} ({', '.join(row_object.get_field_names())})
-                    SELECT {', '.join(row_object.get_field_names())} FROM {temp_table_name}
-                    ON CONFLICT ({pk_cols}) DO NOTHING;
+                    SELECT DISTINCT ON ({distinct_on_cols}) {select_cols}
+                    FROM {temp_table_name} tmp
+                    LEFT JOIN {row_object.get_table_name()} t ON {join_condition}
+                    WHERE t.{pk_cols[0]} IS NULL;
                 """)
     conn.commit()
 
