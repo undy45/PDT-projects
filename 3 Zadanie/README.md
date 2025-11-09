@@ -228,8 +228,34 @@ WHERE ST_Intersects(cesta.way, hranica_okresov.geom);
 ![img_10.png](img_10.png)
 
 ## 12. jedným dopytom zistite číslo a názov katastrálneho územia (z dát ZBGIS, https://www.geoportal.sk/sk/zbgis_smd/na-stiahnutie/), v ktorom sa nachádza najdlhší úsek cesty (z dát OSM) v okrese, v ktorom bývate.
-Kedze nefunguje link www.geoportal.sk v case robenia tohto zadania tak tato uloha neni splnitelna. Verim tomu ze 
-![img_13.png](img_13.png)
+
+Stiahol som gpkg subor
+z https://www.gku.sk/gku/produkty-sluzby/na-stiahnutie/zbgis.html#:~:text=CC-BY%204.0-,Geografické%20názvoslovie,-Formát
+lebo link v zadani nefunguje. Nasledne som ho presunul do ` ~/AppData/Local/Programs/OSGeo4W/bin/ ` a spustil tento
+prikaz na importovanie do db.
+```bash
+ ./ogr2ogr.exe -f PostgreSQL "PG:dbname=osm_slovakia user=postgres password=*****" ./USJ_hranice_0.gpkg
+```
+
+```sql
+select st_length(st_intersection(roads.way, st_transform(kataster.shape, 4326)::geometry)::geography) as len_m,
+        roads.way,
+        kataster.idn5,
+        kataster.nm5
+from planet_osm_polygon AS dom
+         join
+     planet_osm_polygon AS okresy on okresy.admin_level = '8' and st_within(dom.way, okresy.way::geometry)
+         join
+     planet_osm_roads AS roads on st_within(roads.way, okresy.way::geometry)
+         join
+     ku_0 kataster on st_intersects(roads.way, st_transform(kataster.shape, 4326)::geometry)
+where 1 = 1
+  and dom.name = 'Mlynska 7394'
+order by len_m desc
+limit 1;
+```
+Select ale trva minimalne hodinu takze som to nedokazal dobehnut.
+
 ## 13. vytvorte oblasť Okolie_Bratislavy, ktorá bude zahŕňať zónu do 20 km od Bratislavy, ale nebude zahŕňať oblasť Bratislavy (Bratislava I až Bratislava V) a bude len na území Slovenska. Zistite jej výmeru.
 
 ```sql

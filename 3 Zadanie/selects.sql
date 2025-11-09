@@ -140,3 +140,22 @@ where 1 = 1
 
 select ST_Area(ST_Transform(a.way, 4326)::geography) / 1000000 as area_km2
 from bratislava_okolie a;
+
+--12. jedným dopytom zistite číslo a názov katastrálneho územia (z dát ZBGIS, https://www.geoportal.sk/sk/zbgis_smd/na-stiahnutie/),
+-- v ktorom sa nachádza najdlhší úsek cesty (z dát OSM) v okrese, v ktorom bývate.
+DROP TABLE IF EXISTS tmp_table;
+select st_length(st_intersection(roads.way, st_transform(kataster.shape, 4326)::geometry)::geography) as len_m,
+        roads.way,
+        kataster.idn5,
+        kataster.nm5
+from planet_osm_polygon AS dom
+         join
+     planet_osm_polygon AS okresy on okresy.admin_level = '8' and st_within(dom.way, okresy.way::geometry)
+         join
+     planet_osm_roads AS roads on st_within(roads.way, okresy.way::geometry)
+         join
+     ku_0 kataster on st_intersects(roads.way, st_transform(kataster.shape, 4326)::geometry)
+where 1 = 1
+  and dom.name = 'Mlynska 7394'
+order by len_m desc
+limit 1;
