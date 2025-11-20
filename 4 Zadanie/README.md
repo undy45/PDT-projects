@@ -49,7 +49,9 @@ zabezpeci rovnomerne rozlozenie dat a dotazov. Replika zabezpeci dostupnost dat 
 PUT /tweets
 Host: localhost:9200
 ```
+
 Request Body:
+
 ```json
 {
   "settings": {
@@ -58,12 +60,14 @@ Request Body:
   }
 }
 ```
+
 Response:
+
 ```json
 {
-    "acknowledged": true,
-    "shards_acknowledged": true,
-    "index": "tweets"
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "tweets"
 }
 ```
 
@@ -82,7 +86,9 @@ Pred kazdym vytvorenim analyzatora musim zatvorit index s nasledujucim requestom
 POST /tweets/_close
 Host: localhost:9200
 ```
+
 Response:
+
 ```json
 {
   "acknowledged": true,
@@ -92,6 +98,27 @@ Response:
       "closed": true
     }
   }
+}
+```
+
+</details>
+
+Nasledne pred kazdym testom som to znova musel otvorit:
+
+<details>
+<summary>Request and response</summary>
+
+```
+POST /tweets/_close
+Host: localhost:9200
+```
+
+Response:
+
+```json
+{
+  "acknowledged": true,
+  "shards_acknowledged": true
 }
 ```
 
@@ -111,7 +138,9 @@ Response:
 POST /tweets/_settings
 Host: localhost:9200
 ```
+
 Request Body:
+
 ```json
 {
   "settings": {
@@ -149,7 +178,9 @@ Request Body:
   }
 }
 ```
+
 Response:
+
 ```json
 {
   "acknowledged": true
@@ -158,7 +189,168 @@ Response:
 
 </details>
 
+<details>
+<summary>Testing</summary>
+
+```
+POST /tweets/_analyze
+Host: localhost:9200
+```
+
+Request Body:
+
+```json
+{
+  "analyzer": "englando",
+  "text": "If this doctor, who so recklessly flew into New York from West Africa,has Ebola,then Obama should apologize to the American people &amp; resign!"
+}
+```
+
+Response:
+
+```json
+{
+  "tokens": [
+    {
+      "token": "doctor",
+      "start_offset": 8,
+      "end_offset": 14,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "who",
+      "start_offset": 16,
+      "end_offset": 19,
+      "type": "<ALPHANUM>",
+      "position": 3
+    },
+    {
+      "token": "so",
+      "start_offset": 20,
+      "end_offset": 22,
+      "type": "<ALPHANUM>",
+      "position": 4
+    },
+    {
+      "token": "recklessli",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "flew",
+      "start_offset": 34,
+      "end_offset": 38,
+      "type": "<ALPHANUM>",
+      "position": 6
+    },
+    {
+      "token": "new",
+      "start_offset": 44,
+      "end_offset": 47,
+      "type": "<ALPHANUM>",
+      "position": 8
+    },
+    {
+      "token": "york",
+      "start_offset": 48,
+      "end_offset": 52,
+      "type": "<ALPHANUM>",
+      "position": 9
+    },
+    {
+      "token": "from",
+      "start_offset": 53,
+      "end_offset": 57,
+      "type": "<ALPHANUM>",
+      "position": 10
+    },
+    {
+      "token": "west",
+      "start_offset": 58,
+      "end_offset": 62,
+      "type": "<ALPHANUM>",
+      "position": 11
+    },
+    {
+      "token": "africa",
+      "start_offset": 63,
+      "end_offset": 69,
+      "type": "<ALPHANUM>",
+      "position": 12
+    },
+    {
+      "token": "ha",
+      "start_offset": 70,
+      "end_offset": 73,
+      "type": "<ALPHANUM>",
+      "position": 13
+    },
+    {
+      "token": "ebola",
+      "start_offset": 74,
+      "end_offset": 79,
+      "type": "<ALPHANUM>",
+      "position": 14
+    },
+    {
+      "token": "obama",
+      "start_offset": 85,
+      "end_offset": 90,
+      "type": "<ALPHANUM>",
+      "position": 16
+    },
+    {
+      "token": "should",
+      "start_offset": 91,
+      "end_offset": 97,
+      "type": "<ALPHANUM>",
+      "position": 17
+    },
+    {
+      "token": "apolog",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "american",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "peopl",
+      "start_offset": 124,
+      "end_offset": 130,
+      "type": "<ALPHANUM>",
+      "position": 22
+    },
+    {
+      "token": "resign",
+      "start_offset": 137,
+      "end_offset": 143,
+      "type": "<ALPHANUM>",
+      "position": 23
+    }
+  ]
+}
+```
+
+Response vyzera byt ok len niektore slova su trochu inak ako by som cakal. Po researchi to vyzera byt ok.
+
+- slova `who` a `so` by som tu necakal koli stop words ale vyzera to byt ok podla
+  Lucene [Kod](https://github.com/apache/lucene-solr/blob/branch_7x/lucene/core/src/java/org/apache/lucene/analysis/standard/StandardAnalyzer.java#L47-L53)
+- slovo `recklessli` by som cakal `reckless` ale toto je iba detail a je to podla mna podla ocakavani.
+
+</details>
+
 #### 1.2 Analyzátor custom_ngram
+
 - Analyzátor custom_ngram: Určený na "type-ahead" vyhľadávanie po častiach slova.
     - Tokenizer: standard
     - Char Filter: html_strip
@@ -175,7 +367,9 @@ Tuto som zaroven musel zvacsit max_ngram_diff na 3, pretoze defaultne je 1 a roz
 POST /tweets/_settings
 Host: localhost:9200
 ```
+
 Request Body:
+
 ```json
 {
   "settings": {
@@ -208,7 +402,9 @@ Request Body:
   }
 }
 ```
+
 Response:
+
 ```json
 {
   "acknowledged": true
@@ -217,12 +413,1549 @@ Response:
 
 </details>
 
+<details>
+<summary>Testing</summary>
+
+```
+POST /tweets/_analyze
+Host: localhost:9200
+```
+
+Request Body:
+
+```json
+{
+  "analyzer": "custom_ngram",
+  "text": "If this doctor, who so recklessly flew into New York from West Africà,has Ebolà,then Obama should apologize to the Americàn people &amp; resign!"
+}
+```
+
+Response:
+
+```json
+{
+  "tokens": [
+    {
+      "token": "thi",
+      "start_offset": 3,
+      "end_offset": 7,
+      "type": "<ALPHANUM>",
+      "position": 1
+    },
+    {
+      "token": "this",
+      "start_offset": 3,
+      "end_offset": 7,
+      "type": "<ALPHANUM>",
+      "position": 1
+    },
+    {
+      "token": "his",
+      "start_offset": 3,
+      "end_offset": 7,
+      "type": "<ALPHANUM>",
+      "position": 1
+    },
+    {
+      "token": "doc",
+      "start_offset": 8,
+      "end_offset": 14,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "doct",
+      "start_offset": 8,
+      "end_offset": 14,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "docto",
+      "start_offset": 8,
+      "end_offset": 14,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "doctor",
+      "start_offset": 8,
+      "end_offset": 14,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "oct",
+      "start_offset": 8,
+      "end_offset": 14,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "octo",
+      "start_offset": 8,
+      "end_offset": 14,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "octor",
+      "start_offset": 8,
+      "end_offset": 14,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "cto",
+      "start_offset": 8,
+      "end_offset": 14,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "ctor",
+      "start_offset": 8,
+      "end_offset": 14,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "tor",
+      "start_offset": 8,
+      "end_offset": 14,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "who",
+      "start_offset": 16,
+      "end_offset": 19,
+      "type": "<ALPHANUM>",
+      "position": 3
+    },
+    {
+      "token": "rec",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "reck",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "reckl",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "reckle",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "eck",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "eckl",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "eckle",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "eckles",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "ckl",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "ckle",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "ckles",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "ckless",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "kle",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "kles",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "kless",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "klessl",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "les",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "less",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "lessl",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "lessly",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "ess",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "essl",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "essly",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "ssl",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "ssly",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "sly",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "fle",
+      "start_offset": 34,
+      "end_offset": 38,
+      "type": "<ALPHANUM>",
+      "position": 6
+    },
+    {
+      "token": "flew",
+      "start_offset": 34,
+      "end_offset": 38,
+      "type": "<ALPHANUM>",
+      "position": 6
+    },
+    {
+      "token": "lew",
+      "start_offset": 34,
+      "end_offset": 38,
+      "type": "<ALPHANUM>",
+      "position": 6
+    },
+    {
+      "token": "int",
+      "start_offset": 39,
+      "end_offset": 43,
+      "type": "<ALPHANUM>",
+      "position": 7
+    },
+    {
+      "token": "into",
+      "start_offset": 39,
+      "end_offset": 43,
+      "type": "<ALPHANUM>",
+      "position": 7
+    },
+    {
+      "token": "nto",
+      "start_offset": 39,
+      "end_offset": 43,
+      "type": "<ALPHANUM>",
+      "position": 7
+    },
+    {
+      "token": "new",
+      "start_offset": 44,
+      "end_offset": 47,
+      "type": "<ALPHANUM>",
+      "position": 8
+    },
+    {
+      "token": "yor",
+      "start_offset": 48,
+      "end_offset": 52,
+      "type": "<ALPHANUM>",
+      "position": 9
+    },
+    {
+      "token": "york",
+      "start_offset": 48,
+      "end_offset": 52,
+      "type": "<ALPHANUM>",
+      "position": 9
+    },
+    {
+      "token": "ork",
+      "start_offset": 48,
+      "end_offset": 52,
+      "type": "<ALPHANUM>",
+      "position": 9
+    },
+    {
+      "token": "fro",
+      "start_offset": 53,
+      "end_offset": 57,
+      "type": "<ALPHANUM>",
+      "position": 10
+    },
+    {
+      "token": "from",
+      "start_offset": 53,
+      "end_offset": 57,
+      "type": "<ALPHANUM>",
+      "position": 10
+    },
+    {
+      "token": "rom",
+      "start_offset": 53,
+      "end_offset": 57,
+      "type": "<ALPHANUM>",
+      "position": 10
+    },
+    {
+      "token": "wes",
+      "start_offset": 58,
+      "end_offset": 62,
+      "type": "<ALPHANUM>",
+      "position": 11
+    },
+    {
+      "token": "west",
+      "start_offset": 58,
+      "end_offset": 62,
+      "type": "<ALPHANUM>",
+      "position": 11
+    },
+    {
+      "token": "est",
+      "start_offset": 58,
+      "end_offset": 62,
+      "type": "<ALPHANUM>",
+      "position": 11
+    },
+    {
+      "token": "afr",
+      "start_offset": 63,
+      "end_offset": 69,
+      "type": "<ALPHANUM>",
+      "position": 12
+    },
+    {
+      "token": "afri",
+      "start_offset": 63,
+      "end_offset": 69,
+      "type": "<ALPHANUM>",
+      "position": 12
+    },
+    {
+      "token": "afric",
+      "start_offset": 63,
+      "end_offset": 69,
+      "type": "<ALPHANUM>",
+      "position": 12
+    },
+    {
+      "token": "africa",
+      "start_offset": 63,
+      "end_offset": 69,
+      "type": "<ALPHANUM>",
+      "position": 12
+    },
+    {
+      "token": "fri",
+      "start_offset": 63,
+      "end_offset": 69,
+      "type": "<ALPHANUM>",
+      "position": 12
+    },
+    {
+      "token": "fric",
+      "start_offset": 63,
+      "end_offset": 69,
+      "type": "<ALPHANUM>",
+      "position": 12
+    },
+    {
+      "token": "frica",
+      "start_offset": 63,
+      "end_offset": 69,
+      "type": "<ALPHANUM>",
+      "position": 12
+    },
+    {
+      "token": "ric",
+      "start_offset": 63,
+      "end_offset": 69,
+      "type": "<ALPHANUM>",
+      "position": 12
+    },
+    {
+      "token": "rica",
+      "start_offset": 63,
+      "end_offset": 69,
+      "type": "<ALPHANUM>",
+      "position": 12
+    },
+    {
+      "token": "ica",
+      "start_offset": 63,
+      "end_offset": 69,
+      "type": "<ALPHANUM>",
+      "position": 12
+    },
+    {
+      "token": "has",
+      "start_offset": 70,
+      "end_offset": 73,
+      "type": "<ALPHANUM>",
+      "position": 13
+    },
+    {
+      "token": "ebo",
+      "start_offset": 74,
+      "end_offset": 79,
+      "type": "<ALPHANUM>",
+      "position": 14
+    },
+    {
+      "token": "ebol",
+      "start_offset": 74,
+      "end_offset": 79,
+      "type": "<ALPHANUM>",
+      "position": 14
+    },
+    {
+      "token": "ebola",
+      "start_offset": 74,
+      "end_offset": 79,
+      "type": "<ALPHANUM>",
+      "position": 14
+    },
+    {
+      "token": "bol",
+      "start_offset": 74,
+      "end_offset": 79,
+      "type": "<ALPHANUM>",
+      "position": 14
+    },
+    {
+      "token": "bola",
+      "start_offset": 74,
+      "end_offset": 79,
+      "type": "<ALPHANUM>",
+      "position": 14
+    },
+    {
+      "token": "ola",
+      "start_offset": 74,
+      "end_offset": 79,
+      "type": "<ALPHANUM>",
+      "position": 14
+    },
+    {
+      "token": "the",
+      "start_offset": 80,
+      "end_offset": 84,
+      "type": "<ALPHANUM>",
+      "position": 15
+    },
+    {
+      "token": "then",
+      "start_offset": 80,
+      "end_offset": 84,
+      "type": "<ALPHANUM>",
+      "position": 15
+    },
+    {
+      "token": "hen",
+      "start_offset": 80,
+      "end_offset": 84,
+      "type": "<ALPHANUM>",
+      "position": 15
+    },
+    {
+      "token": "oba",
+      "start_offset": 85,
+      "end_offset": 90,
+      "type": "<ALPHANUM>",
+      "position": 16
+    },
+    {
+      "token": "obam",
+      "start_offset": 85,
+      "end_offset": 90,
+      "type": "<ALPHANUM>",
+      "position": 16
+    },
+    {
+      "token": "obama",
+      "start_offset": 85,
+      "end_offset": 90,
+      "type": "<ALPHANUM>",
+      "position": 16
+    },
+    {
+      "token": "bam",
+      "start_offset": 85,
+      "end_offset": 90,
+      "type": "<ALPHANUM>",
+      "position": 16
+    },
+    {
+      "token": "bama",
+      "start_offset": 85,
+      "end_offset": 90,
+      "type": "<ALPHANUM>",
+      "position": 16
+    },
+    {
+      "token": "ama",
+      "start_offset": 85,
+      "end_offset": 90,
+      "type": "<ALPHANUM>",
+      "position": 16
+    },
+    {
+      "token": "sho",
+      "start_offset": 91,
+      "end_offset": 97,
+      "type": "<ALPHANUM>",
+      "position": 17
+    },
+    {
+      "token": "shou",
+      "start_offset": 91,
+      "end_offset": 97,
+      "type": "<ALPHANUM>",
+      "position": 17
+    },
+    {
+      "token": "shoul",
+      "start_offset": 91,
+      "end_offset": 97,
+      "type": "<ALPHANUM>",
+      "position": 17
+    },
+    {
+      "token": "should",
+      "start_offset": 91,
+      "end_offset": 97,
+      "type": "<ALPHANUM>",
+      "position": 17
+    },
+    {
+      "token": "hou",
+      "start_offset": 91,
+      "end_offset": 97,
+      "type": "<ALPHANUM>",
+      "position": 17
+    },
+    {
+      "token": "houl",
+      "start_offset": 91,
+      "end_offset": 97,
+      "type": "<ALPHANUM>",
+      "position": 17
+    },
+    {
+      "token": "hould",
+      "start_offset": 91,
+      "end_offset": 97,
+      "type": "<ALPHANUM>",
+      "position": 17
+    },
+    {
+      "token": "oul",
+      "start_offset": 91,
+      "end_offset": 97,
+      "type": "<ALPHANUM>",
+      "position": 17
+    },
+    {
+      "token": "ould",
+      "start_offset": 91,
+      "end_offset": 97,
+      "type": "<ALPHANUM>",
+      "position": 17
+    },
+    {
+      "token": "uld",
+      "start_offset": 91,
+      "end_offset": 97,
+      "type": "<ALPHANUM>",
+      "position": 17
+    },
+    {
+      "token": "apo",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "apol",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "apolo",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "apolog",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "pol",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "polo",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "polog",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "pologi",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "olo",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "olog",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "ologi",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "ologiz",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "log",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "logi",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "logiz",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "logize",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "ogi",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "ogiz",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "ogize",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "giz",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "gize",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "ize",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "the",
+      "start_offset": 111,
+      "end_offset": 114,
+      "type": "<ALPHANUM>",
+      "position": 20
+    },
+    {
+      "token": "ame",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "amer",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "ameri",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "americ",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "mer",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "meri",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "meric",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "merica",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "eri",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "eric",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "erica",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "erican",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "ric",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "rica",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "rican",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "ica",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "ican",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "can",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "peo",
+      "start_offset": 124,
+      "end_offset": 130,
+      "type": "<ALPHANUM>",
+      "position": 22
+    },
+    {
+      "token": "peop",
+      "start_offset": 124,
+      "end_offset": 130,
+      "type": "<ALPHANUM>",
+      "position": 22
+    },
+    {
+      "token": "peopl",
+      "start_offset": 124,
+      "end_offset": 130,
+      "type": "<ALPHANUM>",
+      "position": 22
+    },
+    {
+      "token": "people",
+      "start_offset": 124,
+      "end_offset": 130,
+      "type": "<ALPHANUM>",
+      "position": 22
+    },
+    {
+      "token": "eop",
+      "start_offset": 124,
+      "end_offset": 130,
+      "type": "<ALPHANUM>",
+      "position": 22
+    },
+    {
+      "token": "eopl",
+      "start_offset": 124,
+      "end_offset": 130,
+      "type": "<ALPHANUM>",
+      "position": 22
+    },
+    {
+      "token": "eople",
+      "start_offset": 124,
+      "end_offset": 130,
+      "type": "<ALPHANUM>",
+      "position": 22
+    },
+    {
+      "token": "opl",
+      "start_offset": 124,
+      "end_offset": 130,
+      "type": "<ALPHANUM>",
+      "position": 22
+    },
+    {
+      "token": "ople",
+      "start_offset": 124,
+      "end_offset": 130,
+      "type": "<ALPHANUM>",
+      "position": 22
+    },
+    {
+      "token": "ple",
+      "start_offset": 124,
+      "end_offset": 130,
+      "type": "<ALPHANUM>",
+      "position": 22
+    },
+    {
+      "token": "res",
+      "start_offset": 137,
+      "end_offset": 143,
+      "type": "<ALPHANUM>",
+      "position": 23
+    },
+    {
+      "token": "resi",
+      "start_offset": 137,
+      "end_offset": 143,
+      "type": "<ALPHANUM>",
+      "position": 23
+    },
+    {
+      "token": "resig",
+      "start_offset": 137,
+      "end_offset": 143,
+      "type": "<ALPHANUM>",
+      "position": 23
+    },
+    {
+      "token": "resign",
+      "start_offset": 137,
+      "end_offset": 143,
+      "type": "<ALPHANUM>",
+      "position": 23
+    },
+    {
+      "token": "esi",
+      "start_offset": 137,
+      "end_offset": 143,
+      "type": "<ALPHANUM>",
+      "position": 23
+    },
+    {
+      "token": "esig",
+      "start_offset": 137,
+      "end_offset": 143,
+      "type": "<ALPHANUM>",
+      "position": 23
+    },
+    {
+      "token": "esign",
+      "start_offset": 137,
+      "end_offset": 143,
+      "type": "<ALPHANUM>",
+      "position": 23
+    },
+    {
+      "token": "sig",
+      "start_offset": 137,
+      "end_offset": 143,
+      "type": "<ALPHANUM>",
+      "position": 23
+    },
+    {
+      "token": "sign",
+      "start_offset": 137,
+      "end_offset": 143,
+      "type": "<ALPHANUM>",
+      "position": 23
+    },
+    {
+      "token": "ign",
+      "start_offset": 137,
+      "end_offset": 143,
+      "type": "<ALPHANUM>",
+      "position": 23
+    }
+  ]
+}
+```
+
+Response vyzera tak isto ok. Schvalne som do vety vymenil niektora `a` za `à` aby som testol asciifolding a vidim ze
+nikde neni znak `à`. Zaroven mame iba tokeny ktore maju dlzku 3 az 6 znakov a vsetky po sebe iduce kombinacie. Taktiez
+vsetko je lowercase.
+
+</details>
+
 #### 1.3 Analyzátor custom_shingles
+
 - Analyzátor custom_shingles: Určený na vytváranie spojených tokenov pre lepšie frázové vyhľadávanie.
     - Tokenizer: standard
     - Char Filter: html_strip
     - Filtre: lowercase, asciifolding a vlastný filter filter_shingles.
     - Vami definovaný filter filter_shingles musí byť typu shingle a spájať tokeny bez medzery (token_separator: "").
+
+<details>
+<summary>Request and response</summary>
+
+```
+POST /tweets/_settings
+Host: localhost:9200
+```
+
+Request Body:
+
+```json
+{
+  "settings": {
+    "analysis": {
+      "filter": {
+        "filter_shingles": {
+          "type": "shingle",
+          "token_separator": ""
+        }
+      },
+      "analyzer": {
+        "custom_shingles": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "char_filter": [
+            "html_strip"
+          ],
+          "filter": [
+            "lowercase",
+            "asciifolding",
+            "filter_shingles"
+          ]
+        }
+      }
+    }
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "acknowledged": true
+}
+```
+
+</details>
+
+
+<details>
+<summary>Testing</summary>
+
+```
+POST /tweets/_analyze
+Host: localhost:9200
+```
+
+Request Body:
+
+```json
+{
+  "analyzer": "custom_shingles",
+  "text": "If this doctor, who so recklessly flew into New York from West Africà,has Ebolà,then Obama should apologize to the Americàn people &amp; resign!"
+}
+```
+
+Response:
+
+```json
+{
+  "tokens": [
+    {
+      "token": "if",
+      "start_offset": 0,
+      "end_offset": 2,
+      "type": "<ALPHANUM>",
+      "position": 0
+    },
+    {
+      "token": "ifthis",
+      "start_offset": 0,
+      "end_offset": 7,
+      "type": "shingle",
+      "position": 0,
+      "positionLength": 2
+    },
+    {
+      "token": "this",
+      "start_offset": 3,
+      "end_offset": 7,
+      "type": "<ALPHANUM>",
+      "position": 1
+    },
+    {
+      "token": "thisdoctor",
+      "start_offset": 3,
+      "end_offset": 14,
+      "type": "shingle",
+      "position": 1,
+      "positionLength": 2
+    },
+    {
+      "token": "doctor",
+      "start_offset": 8,
+      "end_offset": 14,
+      "type": "<ALPHANUM>",
+      "position": 2
+    },
+    {
+      "token": "doctorwho",
+      "start_offset": 8,
+      "end_offset": 19,
+      "type": "shingle",
+      "position": 2,
+      "positionLength": 2
+    },
+    {
+      "token": "who",
+      "start_offset": 16,
+      "end_offset": 19,
+      "type": "<ALPHANUM>",
+      "position": 3
+    },
+    {
+      "token": "whoso",
+      "start_offset": 16,
+      "end_offset": 22,
+      "type": "shingle",
+      "position": 3,
+      "positionLength": 2
+    },
+    {
+      "token": "so",
+      "start_offset": 20,
+      "end_offset": 22,
+      "type": "<ALPHANUM>",
+      "position": 4
+    },
+    {
+      "token": "sorecklessly",
+      "start_offset": 20,
+      "end_offset": 33,
+      "type": "shingle",
+      "position": 4,
+      "positionLength": 2
+    },
+    {
+      "token": "recklessly",
+      "start_offset": 23,
+      "end_offset": 33,
+      "type": "<ALPHANUM>",
+      "position": 5
+    },
+    {
+      "token": "recklesslyflew",
+      "start_offset": 23,
+      "end_offset": 38,
+      "type": "shingle",
+      "position": 5,
+      "positionLength": 2
+    },
+    {
+      "token": "flew",
+      "start_offset": 34,
+      "end_offset": 38,
+      "type": "<ALPHANUM>",
+      "position": 6
+    },
+    {
+      "token": "flewinto",
+      "start_offset": 34,
+      "end_offset": 43,
+      "type": "shingle",
+      "position": 6,
+      "positionLength": 2
+    },
+    {
+      "token": "into",
+      "start_offset": 39,
+      "end_offset": 43,
+      "type": "<ALPHANUM>",
+      "position": 7
+    },
+    {
+      "token": "intonew",
+      "start_offset": 39,
+      "end_offset": 47,
+      "type": "shingle",
+      "position": 7,
+      "positionLength": 2
+    },
+    {
+      "token": "new",
+      "start_offset": 44,
+      "end_offset": 47,
+      "type": "<ALPHANUM>",
+      "position": 8
+    },
+    {
+      "token": "newyork",
+      "start_offset": 44,
+      "end_offset": 52,
+      "type": "shingle",
+      "position": 8,
+      "positionLength": 2
+    },
+    {
+      "token": "york",
+      "start_offset": 48,
+      "end_offset": 52,
+      "type": "<ALPHANUM>",
+      "position": 9
+    },
+    {
+      "token": "yorkfrom",
+      "start_offset": 48,
+      "end_offset": 57,
+      "type": "shingle",
+      "position": 9,
+      "positionLength": 2
+    },
+    {
+      "token": "from",
+      "start_offset": 53,
+      "end_offset": 57,
+      "type": "<ALPHANUM>",
+      "position": 10
+    },
+    {
+      "token": "fromwest",
+      "start_offset": 53,
+      "end_offset": 62,
+      "type": "shingle",
+      "position": 10,
+      "positionLength": 2
+    },
+    {
+      "token": "west",
+      "start_offset": 58,
+      "end_offset": 62,
+      "type": "<ALPHANUM>",
+      "position": 11
+    },
+    {
+      "token": "westafrica",
+      "start_offset": 58,
+      "end_offset": 69,
+      "type": "shingle",
+      "position": 11,
+      "positionLength": 2
+    },
+    {
+      "token": "africa",
+      "start_offset": 63,
+      "end_offset": 69,
+      "type": "<ALPHANUM>",
+      "position": 12
+    },
+    {
+      "token": "africahas",
+      "start_offset": 63,
+      "end_offset": 73,
+      "type": "shingle",
+      "position": 12,
+      "positionLength": 2
+    },
+    {
+      "token": "has",
+      "start_offset": 70,
+      "end_offset": 73,
+      "type": "<ALPHANUM>",
+      "position": 13
+    },
+    {
+      "token": "hasebola",
+      "start_offset": 70,
+      "end_offset": 79,
+      "type": "shingle",
+      "position": 13,
+      "positionLength": 2
+    },
+    {
+      "token": "ebola",
+      "start_offset": 74,
+      "end_offset": 79,
+      "type": "<ALPHANUM>",
+      "position": 14
+    },
+    {
+      "token": "ebolathen",
+      "start_offset": 74,
+      "end_offset": 84,
+      "type": "shingle",
+      "position": 14,
+      "positionLength": 2
+    },
+    {
+      "token": "then",
+      "start_offset": 80,
+      "end_offset": 84,
+      "type": "<ALPHANUM>",
+      "position": 15
+    },
+    {
+      "token": "thenobama",
+      "start_offset": 80,
+      "end_offset": 90,
+      "type": "shingle",
+      "position": 15,
+      "positionLength": 2
+    },
+    {
+      "token": "obama",
+      "start_offset": 85,
+      "end_offset": 90,
+      "type": "<ALPHANUM>",
+      "position": 16
+    },
+    {
+      "token": "obamashould",
+      "start_offset": 85,
+      "end_offset": 97,
+      "type": "shingle",
+      "position": 16,
+      "positionLength": 2
+    },
+    {
+      "token": "should",
+      "start_offset": 91,
+      "end_offset": 97,
+      "type": "<ALPHANUM>",
+      "position": 17
+    },
+    {
+      "token": "shouldapologize",
+      "start_offset": 91,
+      "end_offset": 107,
+      "type": "shingle",
+      "position": 17,
+      "positionLength": 2
+    },
+    {
+      "token": "apologize",
+      "start_offset": 98,
+      "end_offset": 107,
+      "type": "<ALPHANUM>",
+      "position": 18
+    },
+    {
+      "token": "apologizeto",
+      "start_offset": 98,
+      "end_offset": 110,
+      "type": "shingle",
+      "position": 18,
+      "positionLength": 2
+    },
+    {
+      "token": "to",
+      "start_offset": 108,
+      "end_offset": 110,
+      "type": "<ALPHANUM>",
+      "position": 19
+    },
+    {
+      "token": "tothe",
+      "start_offset": 108,
+      "end_offset": 114,
+      "type": "shingle",
+      "position": 19,
+      "positionLength": 2
+    },
+    {
+      "token": "the",
+      "start_offset": 111,
+      "end_offset": 114,
+      "type": "<ALPHANUM>",
+      "position": 20
+    },
+    {
+      "token": "theamerican",
+      "start_offset": 111,
+      "end_offset": 123,
+      "type": "shingle",
+      "position": 20,
+      "positionLength": 2
+    },
+    {
+      "token": "american",
+      "start_offset": 115,
+      "end_offset": 123,
+      "type": "<ALPHANUM>",
+      "position": 21
+    },
+    {
+      "token": "americanpeople",
+      "start_offset": 115,
+      "end_offset": 130,
+      "type": "shingle",
+      "position": 21,
+      "positionLength": 2
+    },
+    {
+      "token": "people",
+      "start_offset": 124,
+      "end_offset": 130,
+      "type": "<ALPHANUM>",
+      "position": 22
+    },
+    {
+      "token": "peopleresign",
+      "start_offset": 124,
+      "end_offset": 143,
+      "type": "shingle",
+      "position": 22,
+      "positionLength": 2
+    },
+    {
+      "token": "resign",
+      "start_offset": 137,
+      "end_offset": 143,
+      "type": "<ALPHANUM>",
+      "position": 23
+    }
+  ]
+}
+```
+
+Odpoved vyzera spravne. Dava to lowercase, meni to specialne znaky a spaja to 2 slova dokopy bez medzery. 2 koli tomu
+lebo min a max maju default 2.
+
+</details>
 
 ### Časť 2: Tvorba striktného mapovania (v sekcii mappings)
 
