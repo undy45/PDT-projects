@@ -1970,23 +1970,1683 @@ nepredvídateľnou štruktúrou (napr. place.attributes) použite "dynamic": "fa
 
 #### Aplikácia analyzátorov:
 
-Každý anglický text (text tweetu full_text, popis používateľa, ..) analyzujte pomocou analyzátora englando.
-Priraďte analyzátory pomocou multi-fields, aby sa zachoval aj pôvodný typ poľa:
-pre všetky mená: pridajte mapovania pre custom_ngram alebo / alebo aj custom_shingles - opíšte prečo
-pre všetky textové polia kde to má zmysel: okrem hlavného englando analyzátora pridajte mapovanie pre custom_shingles.
-Názvy miest, krajín a URL adresy (v objekte place a entities.urls) musia mať pridané mapovanie pre custom_ngram.
-Hashtagy: Text hashtagov (entities.hashtags.text) indexujte ako keyword, ale zabezpečte, aby vyhľadávanie bolo nezávislé
-od veľkosti písmen (case-insensitive). Použite na to normalizer.
-Dátové typy: Zvoľte najvhodnejšie dátové typy (geo_point, geo_shape, nested, date atď.). Dátumové polia musia byť
-schopné spracovať formát z Twitter API.
+- Každý anglický text (text tweetu full_text, popis používateľa, ..) analyzujte pomocou analyzátora englando.
+- Priraďte analyzátory pomocou multi-fields, aby sa zachoval aj pôvodný typ poľa.
+- pre všetky mená: pridajte mapovania pre custom_ngram alebo / alebo aj custom_shingles - opíšte prečo
+  pre všetky textové polia kde to má zmysel.
+- okrem hlavného englando analyzátora pridajte mapovanie pre custom_shingles.
+- Názvy miest, krajín a URL adresy (v objekte place a entities.urls) musia mať pridané mapovanie pre custom_ngram.
+- Hashtagy: Text hashtagov (entities.hashtags.text) indexujte ako keyword, ale zabezpečte, aby vyhľadávanie bolo
+  nezávislé
+  od veľkosti písmen (case-insensitive). Použite na to normalizer.
+- Dátové typy: Zvoľte najvhodnejšie dátové typy (geo_point, geo_shape, nested, date atď.). Dátumové polia musia byť
+  schopné spracovať formát z Twitter API.
 
-### Zdôvodníte tieto rozhodnutia:
+<details>
+<summary>Implementacia</summary>
 
-Prečo a pre ktoré objekty v poli ste zvolili typ nested.
-Prečo je dôležité definovať rekurzívnu štruktúru pre retweeted_status a aké by boli dôsledky, keby ste ho v striktnej
-schéme nedefinovali.
-Vysvetlite rozdiel v použití medzi analyzátorom custom_ngram a custom_shingles na poli user.name. Kedy by ste použili
-jeden a kedy druhý?
+```
+POST /tweets/_settings
+Host: localhost:9200
+```
+
+Request Body:
+
+```json
+{
+  "dynamic": "strict",
+  "properties": {
+    "created_at": {
+      "type": "date",
+      "format": "EEE MMM dd HH:mm:ss Z yyyy"
+    },
+    "id": {
+      "type": "keyword"
+    },
+    "id_str": {
+      "type": "keyword"
+    },
+    "full_text": {
+      "type": "text",
+      "fields": {
+        "englando": {
+          "type": "text",
+          "analyzer": "englando"
+        }
+      }
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "display_text_range": {
+      "type": "integer"
+    },
+    "entities": {
+      "properties": {
+        "hashtags": {
+          "type": "nested",
+          "properties": {
+            "text": {
+              "type": "keyword",
+              "normalizer": "lowercase_normalizer"
+            },
+            "indices": {
+              "type": "integer"
+            }
+          }
+        },
+        "symbols": {
+          "type": "nested",
+          "properties": {
+            "text": {
+              "type": "keyword",
+              "normalizer": "lowercase_normalizer"
+            },
+            "indices": {
+              "type": "integer"
+            }
+          }
+        },
+        "user_mentions": {
+          "type": "nested",
+          "properties": {
+            "screen_name": {
+              "type": "text",
+              "analyzer": "englando",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                },
+                "shingles": {
+                  "type": "text",
+                  "analyzer": "custom_shingles"
+                }
+              }
+            },
+            "name": {
+              "type": "text",
+              "analyzer": "englando",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                },
+                "shingles": {
+                  "type": "text",
+                  "analyzer": "custom_shingles"
+                }
+              }
+            },
+            "id": {
+              "type": "keyword"
+            },
+            "id_str": {
+              "type": "keyword"
+            },
+            "indices": {
+              "type": "integer"
+            }
+          }
+        },
+        "urls": {
+          "type": "nested",
+          "properties": {
+            "url": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "expanded_url": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "display_url": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "indices": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "text",
+      "fields": {
+        "ngram": {
+          "type": "text",
+          "analyzer": "custom_ngram"
+        }
+      }
+    },
+    "in_reply_to_status_id": {
+      "type": "keyword"
+    },
+    "in_reply_to_status_id_str": {
+      "type": "keyword"
+    },
+    "in_reply_to_user_id": {
+      "type": "keyword"
+    },
+    "in_reply_to_user_id_str": {
+      "type": "keyword"
+    },
+    "in_reply_to_screen_name": {
+      "type": "text",
+      "analyzer": "englando",
+      "fields": {
+        "ngram": {
+          "type": "text",
+          "analyzer": "custom_ngram"
+        },
+        "shingles": {
+          "type": "text",
+          "analyzer": "custom_shingles"
+        }
+      }
+    },
+    "user": {
+      "properties": {
+        "id": {
+          "type": "keyword"
+        },
+        "id_str": {
+          "type": "keyword"
+        },
+        "name": {
+          "type": "text",
+          "analyzer": "englando",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            },
+            "shingles": {
+              "type": "text",
+              "analyzer": "custom_shingles"
+            }
+          }
+        },
+        "screen_name": {
+          "type": "text",
+          "analyzer": "englando",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            },
+            "shingles": {
+              "type": "text",
+              "analyzer": "custom_shingles"
+            }
+          }
+        },
+        "location": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        },
+        "description": {
+          "type": "text",
+          "fields": {
+            "englando": {
+              "type": "text",
+              "analyzer": "englando"
+            }
+          }
+        },
+        "url": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        },
+        "entities": {
+          "properties": {
+            "url": {
+              "properties": {
+                "urls": {
+                  "type": "nested",
+                  "properties": {
+                    "url": {
+                      "type": "text",
+                      "fields": {
+                        "ngram": {
+                          "type": "text",
+                          "analyzer": "custom_ngram"
+                        }
+                      }
+                    },
+                    "expanded_url": {
+                      "type": "text",
+                      "fields": {
+                        "ngram": {
+                          "type": "text",
+                          "analyzer": "custom_ngram"
+                        }
+                      }
+                    },
+                    "display_url": {
+                      "type": "text",
+                      "fields": {
+                        "ngram": {
+                          "type": "text",
+                          "analyzer": "custom_ngram"
+                        }
+                      }
+                    },
+                    "indices": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            },
+            "description": {
+              "properties": {
+                "urls": {
+                  "type": "nested",
+                  "properties": {
+                    "url": {
+                      "type": "text",
+                      "fields": {
+                        "ngram": {
+                          "type": "text",
+                          "analyzer": "custom_ngram"
+                        }
+                      }
+                    },
+                    "expanded_url": {
+                      "type": "text",
+                      "fields": {
+                        "ngram": {
+                          "type": "text",
+                          "analyzer": "custom_ngram"
+                        }
+                      }
+                    },
+                    "display_url": {
+                      "type": "text",
+                      "fields": {
+                        "ngram": {
+                          "type": "text",
+                          "analyzer": "custom_ngram"
+                        }
+                      }
+                    },
+                    "indices": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "protected": {
+          "type": "boolean"
+        },
+        "followers_count": {
+          "type": "integer"
+        },
+        "friends_count": {
+          "type": "integer"
+        },
+        "listed_count": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "date",
+          "format": "EEE MMM dd HH:mm:ss Z yyyy"
+        },
+        "favourites_count": {
+          "type": "integer"
+        },
+        "verified": {
+          "type": "boolean"
+        },
+        "statuses_count": {
+          "type": "integer"
+        },
+        "profile_background_color": {
+          "type": "keyword"
+        },
+        "profile_background_image_url": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        },
+        "profile_background_image_url_https": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        },
+        "profile_image_url": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        },
+        "profile_image_url_https": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        },
+        "profile_link_color": {
+          "type": "keyword"
+        },
+        "profile_sidebar_border_color": {
+          "type": "keyword"
+        },
+        "profile_sidebar_fill_color": {
+          "type": "keyword"
+        },
+        "profile_text_color": {
+          "type": "keyword"
+        },
+        "profile_use_background_image": {
+          "type": "boolean"
+        },
+        "has_extended_profile": {
+          "type": "boolean"
+        },
+        "default_profile": {
+          "type": "boolean"
+        },
+        "default_profile_image": {
+          "type": "boolean"
+        },
+        "following": {
+          "type": "boolean"
+        },
+        "follow_request_sent": {
+          "type": "boolean"
+        },
+        "notifications": {
+          "type": "boolean"
+        },
+        "translator_type": {
+          "type": "keyword"
+        }
+      }
+    },
+    "coordinates": {
+      "type": "geo_point"
+    },
+    "place": {
+      "properties": {
+        "attributes": {
+          "type": "object",
+          "dynamic": false
+        },
+        "bounding_box": {
+          "type": "geo_shape"
+        },
+        "country": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        },
+        "country_code": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        },
+        "full_name": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        },
+        "id": {
+          "type": "keyword"
+        },
+        "name": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        },
+        "place_type": {
+          "type": "keyword"
+        },
+        "url": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        }
+      }
+    },
+    "is_quote_status": {
+      "type": "boolean"
+    },
+    "quoted_status_id": {
+      "type": "keyword"
+    },
+    "quoted_status_id_str": {
+      "type": "keyword"
+    },
+    "quoted_status_permalink": {
+      "properties": {
+        "url": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        },
+        "expanded": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        },
+        "display": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        }
+      }
+    },
+    "retweet_count": {
+      "type": "integer"
+    },
+    "favorite_count": {
+      "type": "integer"
+    },
+    "favorited": {
+      "type": "boolean"
+    },
+    "retweeted": {
+      "type": "boolean"
+    },
+    "lang": {
+      "type": "keyword"
+    },
+    "quoted_status": {
+      "properties": {
+        "created_at": {
+          "type": "date",
+          "format": "EEE MMM dd HH:mm:ss Z yyyy"
+        },
+        "id": {
+          "type": "keyword"
+        },
+        "id_str": {
+          "type": "keyword"
+        },
+        "full_text": {
+          "type": "text",
+          "fields": {
+            "englando": {
+              "type": "text",
+              "analyzer": "englando"
+            }
+          }
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "display_text_range": {
+          "type": "integer"
+        },
+        "entities": {
+          "properties": {
+            "hashtags": {
+              "type": "nested",
+              "properties": {
+                "text": {
+                  "type": "keyword",
+                  "normalizer": "lowercase_normalizer"
+                },
+                "indices": {
+                  "type": "integer"
+                }
+              }
+            },
+            "symbols": {
+              "type": "nested",
+              "properties": {
+                "text": {
+                  "type": "keyword",
+                  "normalizer": "lowercase_normalizer"
+                },
+                "indices": {
+                  "type": "integer"
+                }
+              }
+            },
+            "user_mentions": {
+              "type": "nested",
+              "properties": {
+                "screen_name": {
+                  "type": "text",
+                  "analyzer": "englando",
+                  "fields": {
+                    "ngram": {
+                      "type": "text",
+                      "analyzer": "custom_ngram"
+                    },
+                    "shingles": {
+                      "type": "text",
+                      "analyzer": "custom_shingles"
+                    }
+                  }
+                },
+                "name": {
+                  "type": "text",
+                  "analyzer": "englando",
+                  "fields": {
+                    "ngram": {
+                      "type": "text",
+                      "analyzer": "custom_ngram"
+                    },
+                    "shingles": {
+                      "type": "text",
+                      "analyzer": "custom_shingles"
+                    }
+                  }
+                },
+                "id": {
+                  "type": "keyword"
+                },
+                "id_str": {
+                  "type": "keyword"
+                },
+                "indices": {
+                  "type": "integer"
+                }
+              }
+            },
+            "urls": {
+              "type": "nested",
+              "properties": {
+                "url": {
+                  "type": "text",
+                  "fields": {
+                    "ngram": {
+                      "type": "text",
+                      "analyzer": "custom_ngram"
+                    }
+                  }
+                },
+                "expanded_url": {
+                  "type": "text",
+                  "fields": {
+                    "ngram": {
+                      "type": "text",
+                      "analyzer": "custom_ngram"
+                    }
+                  }
+                },
+                "display_url": {
+                  "type": "text",
+                  "fields": {
+                    "ngram": {
+                      "type": "text",
+                      "analyzer": "custom_ngram"
+                    }
+                  }
+                },
+                "indices": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "source": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        },
+        "in_reply_to_status_id": {
+          "type": "keyword"
+        },
+        "in_reply_to_status_id_str": {
+          "type": "keyword"
+        },
+        "in_reply_to_user_id": {
+          "type": "keyword"
+        },
+        "in_reply_to_user_id_str": {
+          "type": "keyword"
+        },
+        "in_reply_to_screen_name": {
+          "type": "text",
+          "analyzer": "englando",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            },
+            "shingles": {
+              "type": "text",
+              "analyzer": "custom_shingles"
+            }
+          }
+        },
+        "user": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "id_str": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "text",
+              "analyzer": "englando",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                },
+                "shingles": {
+                  "type": "text",
+                  "analyzer": "custom_shingles"
+                }
+              }
+            },
+            "screen_name": {
+              "type": "text",
+              "analyzer": "englando",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                },
+                "shingles": {
+                  "type": "text",
+                  "analyzer": "custom_shingles"
+                }
+              }
+            },
+            "location": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "description": {
+              "type": "text",
+              "fields": {
+                "englando": {
+                  "type": "text",
+                  "analyzer": "englando"
+                }
+              }
+            },
+            "url": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "entities": {
+              "properties": {
+                "url": {
+                  "properties": {
+                    "urls": {
+                      "type": "nested",
+                      "properties": {
+                        "url": {
+                          "type": "text",
+                          "fields": {
+                            "ngram": {
+                              "type": "text",
+                              "analyzer": "custom_ngram"
+                            }
+                          }
+                        },
+                        "expanded_url": {
+                          "type": "text",
+                          "fields": {
+                            "ngram": {
+                              "type": "text",
+                              "analyzer": "custom_ngram"
+                            }
+                          }
+                        },
+                        "display_url": {
+                          "type": "text",
+                          "fields": {
+                            "ngram": {
+                              "type": "text",
+                              "analyzer": "custom_ngram"
+                            }
+                          }
+                        },
+                        "indices": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                },
+                "description": {
+                  "properties": {
+                    "urls": {
+                      "type": "nested",
+                      "properties": {
+                        "url": {
+                          "type": "text",
+                          "fields": {
+                            "ngram": {
+                              "type": "text",
+                              "analyzer": "custom_ngram"
+                            }
+                          }
+                        },
+                        "expanded_url": {
+                          "type": "text",
+                          "fields": {
+                            "ngram": {
+                              "type": "text",
+                              "analyzer": "custom_ngram"
+                            }
+                          }
+                        },
+                        "display_url": {
+                          "type": "text",
+                          "fields": {
+                            "ngram": {
+                              "type": "text",
+                              "analyzer": "custom_ngram"
+                            }
+                          }
+                        },
+                        "indices": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "protected": {
+              "type": "boolean"
+            },
+            "followers_count": {
+              "type": "integer"
+            },
+            "friends_count": {
+              "type": "integer"
+            },
+            "listed_count": {
+              "type": "integer"
+            },
+            "created_at": {
+              "type": "date",
+              "format": "EEE MMM dd HH:mm:ss Z yyyy"
+            },
+            "favourites_count": {
+              "type": "integer"
+            },
+            "verified": {
+              "type": "boolean"
+            },
+            "statuses_count": {
+              "type": "integer"
+            },
+            "profile_background_color": {
+              "type": "keyword"
+            },
+            "profile_background_image_url": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "profile_background_image_url_https": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "profile_image_url": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "profile_image_url_https": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "profile_link_color": {
+              "type": "keyword"
+            },
+            "profile_sidebar_border_color": {
+              "type": "keyword"
+            },
+            "profile_sidebar_fill_color": {
+              "type": "keyword"
+            },
+            "profile_text_color": {
+              "type": "keyword"
+            },
+            "profile_use_background_image": {
+              "type": "boolean"
+            },
+            "has_extended_profile": {
+              "type": "boolean"
+            },
+            "default_profile": {
+              "type": "boolean"
+            },
+            "default_profile_image": {
+              "type": "boolean"
+            },
+            "following": {
+              "type": "boolean"
+            },
+            "follow_request_sent": {
+              "type": "boolean"
+            },
+            "notifications": {
+              "type": "boolean"
+            },
+            "translator_type": {
+              "type": "keyword"
+            }
+          }
+        },
+        "coordinates": {
+          "type": "geo_point"
+        },
+        "place": {
+          "properties": {
+            "attributes": {
+              "type": "object",
+              "dynamic": false
+            },
+            "bounding_box": {
+              "type": "geo_shape"
+            },
+            "country": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "country_code": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "full_name": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "id": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "place_type": {
+              "type": "keyword"
+            },
+            "url": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            }
+          }
+        },
+        "is_quote_status": {
+          "type": "boolean"
+        },
+        "quoted_status_id": {
+          "type": "keyword"
+        },
+        "quoted_status_id_str": {
+          "type": "keyword"
+        },
+        "quoted_status_permalink": {
+          "properties": {
+            "url": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "expanded": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "display": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            }
+          }
+        },
+        "retweet_count": {
+          "type": "integer"
+        },
+        "favorite_count": {
+          "type": "integer"
+        },
+        "favorited": {
+          "type": "boolean"
+        },
+        "retweeted": {
+          "type": "boolean"
+        },
+        "lang": {
+          "type": "keyword"
+        },
+        "quoted_status": {
+          "type": "object",
+          "dynamic": false
+        },
+        "retweeted_status": {
+          "type": "object",
+          "dynamic": false
+        }
+      }
+    },
+    "retweeted_status": {
+      "properties": {
+        "created_at": {
+          "type": "date",
+          "format": "EEE MMM dd HH:mm:ss Z yyyy"
+        },
+        "id": {
+          "type": "keyword"
+        },
+        "id_str": {
+          "type": "keyword"
+        },
+        "full_text": {
+          "type": "text",
+          "fields": {
+            "englando": {
+              "type": "text",
+              "analyzer": "englando"
+            }
+          }
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "display_text_range": {
+          "type": "integer"
+        },
+        "entities": {
+          "properties": {
+            "hashtags": {
+              "type": "nested",
+              "properties": {
+                "text": {
+                  "type": "keyword",
+                  "normalizer": "lowercase_normalizer"
+                },
+                "indices": {
+                  "type": "integer"
+                }
+              }
+            },
+            "symbols": {
+              "type": "nested",
+              "properties": {
+                "text": {
+                  "type": "keyword",
+                  "normalizer": "lowercase_normalizer"
+                },
+                "indices": {
+                  "type": "integer"
+                }
+              }
+            },
+            "user_mentions": {
+              "type": "nested",
+              "properties": {
+                "screen_name": {
+                  "type": "text",
+                  "analyzer": "englando",
+                  "fields": {
+                    "ngram": {
+                      "type": "text",
+                      "analyzer": "custom_ngram"
+                    },
+                    "shingles": {
+                      "type": "text",
+                      "analyzer": "custom_shingles"
+                    }
+                  }
+                },
+                "name": {
+                  "type": "text",
+                  "analyzer": "englando",
+                  "fields": {
+                    "ngram": {
+                      "type": "text",
+                      "analyzer": "custom_ngram"
+                    },
+                    "shingles": {
+                      "type": "text",
+                      "analyzer": "custom_shingles"
+                    }
+                  }
+                },
+                "id": {
+                  "type": "keyword"
+                },
+                "id_str": {
+                  "type": "keyword"
+                },
+                "indices": {
+                  "type": "integer"
+                }
+              }
+            },
+            "urls": {
+              "type": "nested",
+              "properties": {
+                "url": {
+                  "type": "text",
+                  "fields": {
+                    "ngram": {
+                      "type": "text",
+                      "analyzer": "custom_ngram"
+                    }
+                  }
+                },
+                "expanded_url": {
+                  "type": "text",
+                  "fields": {
+                    "ngram": {
+                      "type": "text",
+                      "analyzer": "custom_ngram"
+                    }
+                  }
+                },
+                "display_url": {
+                  "type": "text",
+                  "fields": {
+                    "ngram": {
+                      "type": "text",
+                      "analyzer": "custom_ngram"
+                    }
+                  }
+                },
+                "indices": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "source": {
+          "type": "text",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            }
+          }
+        },
+        "in_reply_to_status_id": {
+          "type": "keyword"
+        },
+        "in_reply_to_status_id_str": {
+          "type": "keyword"
+        },
+        "in_reply_to_user_id": {
+          "type": "keyword"
+        },
+        "in_reply_to_user_id_str": {
+          "type": "keyword"
+        },
+        "in_reply_to_screen_name": {
+          "type": "text",
+          "analyzer": "englando",
+          "fields": {
+            "ngram": {
+              "type": "text",
+              "analyzer": "custom_ngram"
+            },
+            "shingles": {
+              "type": "text",
+              "analyzer": "custom_shingles"
+            }
+          }
+        },
+        "user": {
+          "properties": {
+            "id": {
+              "type": "keyword"
+            },
+            "id_str": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "text",
+              "analyzer": "englando",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                },
+                "shingles": {
+                  "type": "text",
+                  "analyzer": "custom_shingles"
+                }
+              }
+            },
+            "screen_name": {
+              "type": "text",
+              "analyzer": "englando",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                },
+                "shingles": {
+                  "type": "text",
+                  "analyzer": "custom_shingles"
+                }
+              }
+            },
+            "location": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "description": {
+              "type": "text",
+              "fields": {
+                "englando": {
+                  "type": "text",
+                  "analyzer": "englando"
+                }
+              }
+            },
+            "url": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "entities": {
+              "properties": {
+                "url": {
+                  "properties": {
+                    "urls": {
+                      "type": "nested",
+                      "properties": {
+                        "url": {
+                          "type": "text",
+                          "fields": {
+                            "ngram": {
+                              "type": "text",
+                              "analyzer": "custom_ngram"
+                            }
+                          }
+                        },
+                        "expanded_url": {
+                          "type": "text",
+                          "fields": {
+                            "ngram": {
+                              "type": "text",
+                              "analyzer": "custom_ngram"
+                            }
+                          }
+                        },
+                        "display_url": {
+                          "type": "text",
+                          "fields": {
+                            "ngram": {
+                              "type": "text",
+                              "analyzer": "custom_ngram"
+                            }
+                          }
+                        },
+                        "indices": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                },
+                "description": {
+                  "properties": {
+                    "urls": {
+                      "type": "nested",
+                      "properties": {
+                        "url": {
+                          "type": "text",
+                          "fields": {
+                            "ngram": {
+                              "type": "text",
+                              "analyzer": "custom_ngram"
+                            }
+                          }
+                        },
+                        "expanded_url": {
+                          "type": "text",
+                          "fields": {
+                            "ngram": {
+                              "type": "text",
+                              "analyzer": "custom_ngram"
+                            }
+                          }
+                        },
+                        "display_url": {
+                          "type": "text",
+                          "fields": {
+                            "ngram": {
+                              "type": "text",
+                              "analyzer": "custom_ngram"
+                            }
+                          }
+                        },
+                        "indices": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "protected": {
+              "type": "boolean"
+            },
+            "followers_count": {
+              "type": "integer"
+            },
+            "friends_count": {
+              "type": "integer"
+            },
+            "listed_count": {
+              "type": "integer"
+            },
+            "created_at": {
+              "type": "date",
+              "format": "EEE MMM dd HH:mm:ss Z yyyy"
+            },
+            "favourites_count": {
+              "type": "integer"
+            },
+            "verified": {
+              "type": "boolean"
+            },
+            "statuses_count": {
+              "type": "integer"
+            },
+            "profile_background_color": {
+              "type": "keyword"
+            },
+            "profile_background_image_url": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "profile_background_image_url_https": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "profile_image_url": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "profile_image_url_https": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "profile_link_color": {
+              "type": "keyword"
+            },
+            "profile_sidebar_border_color": {
+              "type": "keyword"
+            },
+            "profile_sidebar_fill_color": {
+              "type": "keyword"
+            },
+            "profile_text_color": {
+              "type": "keyword"
+            },
+            "profile_use_background_image": {
+              "type": "boolean"
+            },
+            "has_extended_profile": {
+              "type": "boolean"
+            },
+            "default_profile": {
+              "type": "boolean"
+            },
+            "default_profile_image": {
+              "type": "boolean"
+            },
+            "following": {
+              "type": "boolean"
+            },
+            "follow_request_sent": {
+              "type": "boolean"
+            },
+            "notifications": {
+              "type": "boolean"
+            },
+            "translator_type": {
+              "type": "keyword"
+            }
+          }
+        },
+        "coordinates": {
+          "type": "geo_point"
+        },
+        "place": {
+          "properties": {
+            "attributes": {
+              "type": "object",
+              "dynamic": false
+            },
+            "bounding_box": {
+              "type": "geo_shape"
+            },
+            "country": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "country_code": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "full_name": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "id": {
+              "type": "keyword"
+            },
+            "name": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "place_type": {
+              "type": "keyword"
+            },
+            "url": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            }
+          }
+        },
+        "is_quote_status": {
+          "type": "boolean"
+        },
+        "quoted_status_id": {
+          "type": "keyword"
+        },
+        "quoted_status_id_str": {
+          "type": "keyword"
+        },
+        "quoted_status_permalink": {
+          "properties": {
+            "url": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "expanded": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            },
+            "display": {
+              "type": "text",
+              "fields": {
+                "ngram": {
+                  "type": "text",
+                  "analyzer": "custom_ngram"
+                }
+              }
+            }
+          }
+        },
+        "retweet_count": {
+          "type": "integer"
+        },
+        "favorite_count": {
+          "type": "integer"
+        },
+        "favorited": {
+          "type": "boolean"
+        },
+        "retweeted": {
+          "type": "boolean"
+        },
+        "lang": {
+          "type": "keyword"
+        },
+        "quoted_status": {
+          "type": "object",
+          "dynamic": false
+        },
+        "retweeted_status": {
+          "type": "object",
+          "dynamic": false
+        }
+      }
+    }
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "acknowledged": true
+}
+```
+
+</details>
+
+#### Zdôvodníte tieto rozhodnutia:
+
+- Prečo a pre ktoré objekty v poli ste zvolili typ nested.
+    - Zvolil som nested pre nasledujuce fieldy
+        - Hashtags
+        - symbols
+        - user_mentions
+        - urls
+    - Pre vsetky tieto fieldy som tak zvolil lebo drzia v sebe zoznam
+- Prečo je dôležité definovať rekurzívnu štruktúru pre retweeted_status a aké by boli dôsledky, keby ste ho v striktnej
+  schéme nedefinovali.
+    - Spravil som to tak ze som skopiroval strukturu pola tweet do pola retweeted_status a quoted status. Nasledne v
+      nich som som dal nech sa to neindexuje dalej
+- Vysvetlite rozdiel v použití medzi analyzátorom custom_ngram a custom_shingles na poli user.name. Kedy by ste použili
+  jeden a kedy druhý?
+  - Custom_ngrm sa pouziva hlavne na vyhladavanie na urovni znakom. Takze pre prikladove meno `Juli Forcato` by tam boli
+    ngrami `jul`, `uli` atd. shingles funguje na urovni fraz takze by to spojilo `juliforcato`.
 
 ### Časť 3: Naimportujte dáta
 
